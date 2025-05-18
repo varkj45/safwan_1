@@ -51,7 +51,7 @@ Platform,
 import { useRouter } from 'expo-router'; 
 const { width: WIDTH, height: HEIGHT } = Dimensions.get('window'); 
 const API_BASE = Platform.OS === 'android' 
-? 'http://10.1.0.0:8000/api' 
+? '/api' 
 
 export default function LoginPage() { 
 const router = useRouter(); 
