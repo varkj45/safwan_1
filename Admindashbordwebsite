@@ -1,1 +1,633 @@
-
+React native  
+DriverForm.jsx 
+import React, { useState } from 'react'; 
+import api from '../api'; 
+ 
+export default function DriverForm({ onCreated }) { 
+  const [name, setName]         = useState(''); 
+  const [email, setEmail]       = useState(''); 
+  const [password, setPassword] = useState(''); 
+  const [loading, setLoading]   = useState(false); 
+ 
+  const handleSubmit = async (e) => { 
+    e.preventDefault(); 
+    if (!name || !email || !password) { 
+      alert('All fields are required.'); 
+      return; 
+    } 
+    setLoading(true); 
+    try { 
+      const newDriver = await api.post('/drivers', { name, email, password }); 
+      onCreated(newDriver); 
+      setName(''); setEmail(''); setPassword(''); 
+    } catch (err) { 
+      console.error(err); 
+      alert(err.message); 
+    } finally { 
+      setLoading(false); 
+    } 
+  }; 
+ 
+  return ( 
+    <div className="panel"> 
+      <h2>Create New Driver</h2> 
+      <form 
+        onSubmit={handleSubmit} 
+        style={{ 
+          display: 'flex', 
+          gap: '12px', 
+          flexWrap: 'wrap', 
+          alignItems: 'center' 
+        }} 
+      > 
+        <input 
+          type="text" 
+          placeholder="Name" 
+          value={name} 
+          onChange={e => setName(e.target.value)} 
+          style={{ flex: '1 1 150px', padding: '8px' }} 
+        /> 
+        <input 
+          type="email" 
+          placeholder="Email" 
+          value={email} 
+          onChange={e => setEmail(e.target.value)} 
+          style={{ flex: '1 1 200px', padding: '8px' }} 
+        /> 
+        <input 
+          type="password" 
+          placeholder="Password" 
+          value={password} 
+          onChange={e => setPassword(e.target.value)} 
+          style={{ flex: '1 1 150px', padding: '8px' }} 
+        /> 
+        <button 
+          type="submit" 
+          disabled={loading} 
+          style={{ 
+            padding: '8px 16px', 
+            background: '#7514C5', 
+            color: '#fff', 
+            border: 'none', 
+            borderRadius: '4px' 
+          }} 
+        > 
+          {loading ? 'Saving…' : 'Add Driver'} 
+        </button> 
+      </form> 
+    </div> 
+  ); 
+} 
+ 
+ 
+DriverList.jsx 
+// src/components/DriverList.jsx 
+ 
+import React from 'react'; 
+ 
+export default function DriverList({ drivers }) { 
+  // Unwrap ResourceCollection { data: [...] } or plain array 
+  const list = Array.isArray(drivers) 
+    ? drivers 
+    : Array.isArray(drivers?.data) 
+      ? drivers.data 
+      : []; 
+ 
+  if (list.length === 0) { 
+    return <p>No drivers found.</p>; 
+  } 
+ 
+  // Helper to render star rating 
+  const renderStars = (n) => { 
+    const filled = '★'.repeat(Math.max(0, Math.min(n, 5))); 
+    const empty  = '☆'.repeat(Math.max(0, 5 - n)); 
+    return filled + empty; 
+  }; 
+ 
+  return ( 
+    <table style={{ width: '100%', borderCollapse: 'collapse' }}> 
+      <thead> 
+        <tr> 
+          <th style={{ padding: '8px', textAlign: 'left' }}>Name</th> 
+          <th style={{ padding: '8px', textAlign: 'left' }}>Email</th> 
+          <th style={{ padding: '8px', textAlign: 'left' }}>Rating</th> 
+          <th style={{ padding: '8px', textAlign: 'left' }}>Active</th> 
+        </tr> 
+      </thead> 
+      <tbody> 
+        {list.map(driver => ( 
+          <tr key={driver.id}> 
+            <td style={{ padding: '8px' }}>{driver.name}</td> 
+            <td style={{ padding: '8px' }}>{driver.email}</td> 
+            <td style={{ padding: '8px', fontSize: '1.2em', color: '#FFD700' }}> 
+              {renderStars(driver.rating ?? 0)} 
+            </td> 
+            <td style={{ padding: '8px' }}> 
+              <span 
+                style={{ 
+                  display: 'inline-block', 
+                  width: '14px', 
+                  height: '14px', 
+                  backgroundColor: driver.active ? 'green' : 'red', 
+                  borderRadius: '50%', 
+                }} 
+              /> 
+            </td> 
+          </tr> 
+        ))} 
+      </tbody> 
+    </table> 
+  ); 
+} 
+ 
+ 
+NotesList.jsx 
+// src/components/NotesList.jsx 
+import React from 'react'; 
+ 
+const notes = []; 
+const past  = [ 
+  { id:1020, status:'Pending',   average:'Perola St'  }, 
+  { id:1005, status:'Completed', average:'123 Maple St' }, 
+]; 
+ 
+export default function NotesList() { 
+  return ( 
+    <div> 
+      <h3>Notes</h3> 
+      {notes.length === 0 
+        ? <p>No notes</p> 
+        : <ul>{notes.map((n,i)=><li key={i}>{n}</li>)}</ul> 
+      } 
+ 
+      <h3>Past Orders</h3> 
+      <table> 
+        <thead><tr><th>ID</th><th>Status</th><th>Average</th></tr></thead> 
+        <tbody> 
+          {past.map((p,i) => ( 
+            <tr key={i}> 
+              <td>#{p.id}</td> 
+              <td>{p.status}</td> 
+              <td>{p.average}</td> 
+            </tr> 
+          ))} 
+        </tbody> 
+      </table> 
+    </div> 
+  ); 
+} 
+ 
+ 
+OrderList.jsx 
+import React from 'react'; 
+ 
+export default function OrderList({ orders }) { 
+  if (!orders.length) return <p>No orders found.</p>; 
+  return ( 
+    <table> 
+      <thead> 
+        <tr> 
+          <th>ID</th> 
+          <th>Status</th> 
+          <th>Pickup</th> 
+          <th>Drop-off</th> 
+          <th>Customer Email</th> 
+        </tr> 
+      </thead> 
+      <tbody> 
+        {orders.map(o => ( 
+          <tr key={o.id}> 
+            <td>{o.id}</td> 
+            <td>{o.status}</td> 
+            <td>{o.pickup_location}</td> 
+            <td>{o.dropoff_location}</td> 
+            <td>{o.customer_email || o.user?.email}</td> 
+          </tr> 
+        ))} 
+      </tbody> 
+    </table> 
+  ); 
+} 
+ 
+ 
+RatingList.jsx 
+// src/components/RatingList.jsx 
+import React from 'react'; 
+ 
+const ratings = [ 
+  { user:'Alice Johnson', rating:4 }, 
+  { user:'Bob Brown',     rating:5 }, 
+]; 
+ 
+export default function RatingList() { 
+  const stars = n => '★'.repeat(n) + '☆'.repeat(5-n); 
+  return ( 
+    <table> 
+      <thead><tr><th>User</th><th>Rating</th></tr></thead> 
+      <tbody> 
+        {ratings.map((r,i)=>( 
+          <tr key={i}> 
+            <td>{r.user}</td> 
+            <td>{stars(r.rating)}</td> 
+          </tr> 
+        ))} 
+      </tbody> 
+    </table> 
+  ); 
+} 
+ 
+ 
+UserList.jsx 
+import React from 'react'; 
+ 
+export default function UserList({ users }) { 
+  if (!users.length) return <p>No users found.</p>; 
+  return ( 
+    <table> 
+      <thead> 
+        <tr> 
+          <th>Name</th> 
+          <th>Email</th> 
+          <th>Enabled</th> 
+        </tr> 
+      </thead> 
+      <tbody> 
+        {users.map(u => ( 
+          <tr key={u.id}> 
+            <td>{u.name}</td> 
+            <td>{u.email}</td> 
+            <td> 
+              <input 
+                type="checkbox" 
+                checked={u.is_active ?? u.enabled} 
+                readOnly 
+              /> 
+            </td> 
+          </tr> 
+        ))} 
+      </tbody> 
+    </table> 
+  ); 
+} 
+ 
+ 
+AdminOrders.jsx 
+// src/pages/AdminOrders.jsx 
+ 
+import React, { useState, useEffect } from 'react'; 
+import api from '../api'; 
+import OrderList   from '../components/OrderList'; 
+import DriverForm  from '../components/DriverForm'; 
+import DriverList  from '../components/DriverList'; 
+import UserList    from '../components/UserList'; 
+ 
+export default function AdminOrders() { 
+  const [view, setView]       = useState('orders'); 
+  const [orders, setOrders]   = useState([]); 
+  const [drivers, setDrivers] = useState([]); 
+  const [users, setUsers]     = useState([]); 
+  const [loading, setLoading] = useState(true); 
+ 
+  // Fetch orders, drivers, users in parallel 
+  useEffect(() => { 
+    async function fetchAll() { 
+      setLoading(true); 
+      try { 
+        const [o, d, u] = await Promise.all([ 
+          api.get('/orders'), 
+          api.get('/drivers'), 
+          api.get('/users'), 
+        ]); 
+        setOrders(o); 
+        setDrivers(d); 
+        setUsers(u); 
+      } catch (err) { 
+        console.error(err); 
+        alert('Failed to load data'); 
+      } finally { 
+        setLoading(false); 
+      } 
+    } 
+    fetchAll(); 
+  }, []); 
+ 
+  if (loading) { 
+    return <p style={{ padding: 20, color: 'white' }}>Loading…</p>; 
+  } 
+ 
+  return ( 
+    <div className="dashboard"> 
+      <header className="header">Admin Dashboard</header> 
+      <aside className="sidebar"> 
+        <ul> 
+          <li 
+            className={view === 'orders' ? 'active' : ''} 
+            onClick={() => setView('orders')} 
+          > 
+            Orders 
+          </li> 
+          <li 
+            className={view === 'drivers' ? 'active' : ''} 
+            onClick={() => setView('drivers')} 
+          > 
+            Drivers 
+          </li> 
+          <li 
+            className={view === 'users' ? 'active' : ''} 
+            onClick={() => setView('users')} 
+          > 
+            Users 
+          </li> 
+        </ul> 
+      </aside> 
+ 
+      <main className="main"> 
+        {view === 'orders' && ( 
+          <> 
+            <div className="panel"> 
+              <h2>Orders</h2> 
+              <OrderList orders={orders} /> 
+            </div> 
+            <div className="panel"> 
+              <h2>Drivers</h2> 
+              <DriverList drivers={drivers} /> 
+            </div> 
+            <div className="panel"> 
+              <h2>Users</h2> 
+              <UserList users={users} /> 
+            </div> 
+          </> 
+        )} 
+ 
+        {view === 'drivers' && ( 
+          <> 
+            <DriverForm 
+              onCreated={newDriver => 
+                setDrivers(curr => [newDriver, ...curr]) 
+              } 
+            /> 
+            <div className="panel"> 
+              <h2>Drivers</h2> 
+              <DriverList drivers={drivers} /> 
+            </div> 
+          </> 
+        )} 
+ 
+        {view === 'users' && ( 
+          <div className="panel"> 
+            <h2>Users</h2> 
+            <UserList users={users} /> 
+          </div> 
+        )} 
+      </main> 
+    </div> 
+  ); 
+} 
+ 
+ 
+DriverDashboard.jsx 
+import React, { useState, useEffect } from 'react'; 
+import DriverForm from '../components/DriverForm'; 
+import DriverList from '../components/DriverList'; 
+import api from '../api'; 
+ 
+export default function DriverDashboard() { 
+  const [drivers, setDrivers] = useState([]); 
+  const [loading, setLoading] = useState(true); 
+ 
+  useEffect(() => { 
+    api.get('/drivers') 
+      .then(data => setDrivers(data)) 
+      .catch(err => console.error(err)) 
+      .finally(() => setLoading(false)); 
+  }, []); 
+ 
+  const handleCreated = (newDriver) => { 
+    setDrivers([newDriver, ...drivers]); 
+  }; 
+ 
+  return ( 
+    <> 
+      <DriverForm onCreated={handleCreated} /> 
+      <div className="panel"> 
+        <h2>Drivers</h2> 
+        {loading ? <p>Loading…</p> : <DriverList drivers={drivers} />} 
+      </div> 
+    </> 
+  ); 
+} 
+ 
+ 
+UserDashboard.jsx 
+import React, { useState, useEffect } from 'react'; 
+import api         from '../api'; 
+import UserList    from '../components/UserList'; 
+import RatingList  from '../components/RatingList'; 
+ 
+export default function UserDashboard() { 
+  const [users, setUsers]     = useState([]); 
+  const [loading, setLoading] = useState(true); 
+ 
+  useEffect(() => { 
+    api.get('/users') 
+      .then(data => setUsers(data)) 
+      .catch(console.error) 
+      .finally(() => setLoading(false)); 
+  }, []); 
+ 
+  return ( 
+    <> 
+      <div className="panel"> 
+        <h2>Users</h2> 
+        {loading ? <p>Loading…</p> : <UserList users={users} />} 
+      </div> 
+      <div className="panel"> 
+        <h2>User Ratings</h2> 
+        {loading ? <p>Loading…</p> : <RatingList drivers={users} />} 
+      </div> 
+    </> 
+  ); 
+} 
+ 
+ 
+Api.js 
+const API_BASE = '/api'; 
+ 
+async function request(path, { method = 'GET', data } = {}) { 
+  const url     = API_BASE + (path.startsWith('/') ? path : `/${path}`); 
+  const headers = { 'Accept': 'application/json' }; 
+  const opts    = { method, headers, mode: 'cors' }; 
+ 
+  if (data) { 
+    headers['Content-Type'] = 'application/json'; 
+    opts.body = JSON.stringify(data); 
+  } 
+ 
+  const res = await fetch(url, opts); 
+  if (!res.ok) { 
+    let message = res.statusText; 
+    try { 
+      const err = await res.json(); 
+      message = err.message || message; 
+    } catch {} 
+    throw new Error(message); 
+  } 
+  if (res.status === 204) return null; 
+ 
+const payload = await res.json(); 
+return payload.data ?? payload; 
+} 
+const api = { 
+get:  path      => request(path, { method: 'GET' }), 
+post: (path, d) => request(path, { method: 'POST', data: d }), 
+}; 
+export default api; 
+React  
+driver-home.tsx 
+import React from 'react'; 
+import { ImageBackground, SafeAreaView, StyleSheet, Text } from 'react-native'; 
+export default function DriverHome() { 
+return ( 
+    <ImageBackground 
+      source={require('@/assets/images/rod3.png')} 
+      style={styles.background} 
+      resizeMode="cover" 
+    > 
+      <SafeAreaView style={styles.overlay}> 
+        {/* Replace this Text with whatever your home screen needs */} 
+        <Text style={styles.welcome}>Welcome, Driver!</Text> 
+      </SafeAreaView> 
+    </ImageBackground> 
+  ); 
+} 
+ 
+const styles = StyleSheet.create({ 
+  background: { 
+    flex: 1, 
+    width: '100%', 
+    height: '100%', 
+  }, 
+  overlay: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+  }, 
+  welcome: { 
+    fontSize: 24, 
+    color: '#fff', 
+    fontWeight: 'bold', 
+}, 
+}); 
+Index.tsx 
+// app/index.tsx 
+import React, { useState } from 'react'; 
+import { 
+Alert, 
+Dimensions, 
+ImageBackground, 
+SafeAreaView, 
+StyleSheet, 
+Text, 
+TextInput, 
+TouchableOpacity, 
+Platform, 
+} from 'react-native'; 
+import { useRouter } from 'expo-router'; 
+const { width: WIDTH, height: HEIGHT } = Dimensions.get('window'); 
+const API_BASE = Platform.OS === 'android' 
+' 
+export default function LoginPage() { 
+const router = useRouter(); 
+  const [email,    setEmail]    = useState(''); 
+  const [password, setPassword] = useState(''); 
+  const [loading,  setLoading]  = useState(false); 
+ 
+  const isFormValid = email.trim() && password.trim(); 
+ 
+  const handleLogin = async () => { 
+    if (!isFormValid) { 
+      return Alert.alert('Missing credentials', 'Please fill in both fields.'); 
+    } 
+    setLoading(true); 
+    try { 
+      const res = await fetch(`${API_BASE}/login`, { 
+        method: 'POST', 
+        headers: { 'Content-Type':'application/json', Accept:'application/json' }, 
+        body: JSON.stringify({ email, password }), 
+      }); 
+      const data = await res.json(); 
+      if (!res.ok) { 
+        return Alert.alert(data.message || 'Invalid credentials'); 
+      } 
+      // Optionally store token: await SecureStore.setItemAsync('token', 
+data.token); 
+      // Navigate to the home screen 
+      router.push('/driver-home'); 
+    } catch (err) { 
+      console.error(err); 
+      Alert.alert('Network error. Please try again.'); 
+    } finally { 
+      setLoading(false); 
+    } 
+  }; 
+ 
+  return ( 
+    <ImageBackground 
+      source={require('@/assets/images/rod.png')} 
+      style={styles.background} 
+      resizeMode="cover" 
+    > 
+      <SafeAreaView style={styles.overlay}> 
+        <Text style={styles.title}>Rodud</Text> 
+ 
+        <TextInput 
+          style={styles.input} 
+          placeholder="Enter your email" 
+          placeholderTextColor="#ccc" 
+          keyboardType="email-address" 
+          autoCapitalize="none" 
+          value={email} 
+          onChangeText={setEmail} 
+        /> 
+ 
+        <TextInput 
+          style={styles.input} 
+          placeholder="Enter your password" 
+          placeholderTextColor="#ccc" 
+          secureTextEntry 
+          value={password} 
+          onChangeText={setPassword} 
+        /> 
+ 
+        <TouchableOpacity 
+          style={[styles.button, (!isFormValid || loading) && styles.buttonDisabled]} 
+          onPress={handleLogin} 
+          disabled={!isFormValid || loading} 
+        > 
+          <Text style={styles.buttonText}> 
+            {loading ? 'Logging in…' : 'Login'} 
+          </Text> 
+        </TouchableOpacity> 
+      </SafeAreaView> 
+    </ImageBackground> 
+  ); 
+} 
+ 
+const styles = StyleSheet.create({ 
+  background: { flex:1, width:WIDTH, height:HEIGHT }, 
+  overlay:    { flex:1, justifyContent:'center', paddingHorizontal:24, 
+backgroundColor:'rgba(0,0,0,0.3)' }, 
+  title:      { fontSize:32, fontWeight:'700', color:'#FFF', textAlign:'center', 
+marginBottom:32 }, 
+  input: { 
+    width:'100%', height:50, backgroundColor:'rgba(255,255,255,0.2)', 
+    borderRadius:25, paddingHorizontal:20, marginBottom:16, 
+    color:'#FFF', fontSize:16, 
+}, 
+button: { 
+width:'100%', height:50, backgroundColor:'#FCFF42', 
+borderRadius:25, justifyContent:'center', alignItems:'center', marginTop:8, 
+}, 
+buttonDisabled: { backgroundColor:'#AAA' }, 
+buttonText:     { fontSize:18, fontWeight:'600', color:'#000' }, 
+}); 
