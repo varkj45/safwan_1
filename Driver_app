@@ -1,1 +1,150 @@
 
+driver-home.tsx 
+import React from 'react'; 
+import { ImageBackground, SafeAreaView, StyleSheet, Text } from 'react-native'; 
+export default function DriverHome() { 
+return ( 
+    <ImageBackground 
+      source={require('@/assets/images/rod3.png')} 
+      style={styles.background} 
+      resizeMode="cover" 
+    > 
+      <SafeAreaView style={styles.overlay}> 
+        {/* Replace this Text with whatever your home screen needs */} 
+        <Text style={styles.welcome}>Welcome, Driver!</Text> 
+      </SafeAreaView> 
+    </ImageBackground> 
+  ); 
+} 
+ 
+const styles = StyleSheet.create({ 
+  background: { 
+    flex: 1, 
+    width: '100%', 
+    height: '100%', 
+  }, 
+  overlay: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+  }, 
+  welcome: { 
+    fontSize: 24, 
+    color: '#fff', 
+    fontWeight: 'bold', 
+}, 
+}); 
+Index.tsx 
+// app/index.tsx 
+import React, { useState } from 'react'; 
+import { 
+Alert, 
+Dimensions, 
+ImageBackground, 
+SafeAreaView, 
+StyleSheet, 
+Text, 
+TextInput, 
+TouchableOpacity, 
+Platform, 
+} from 'react-native'; 
+import { useRouter } from 'expo-router'; 
+const { width: WIDTH, height: HEIGHT } = Dimensions.get('window'); 
+const API_BASE = Platform.OS === 'android' 
+? 'http://10.1.0.0:8000/api' 
+
+export default function LoginPage() { 
+const router = useRouter(); 
+  const [email,    setEmail]    = useState(''); 
+  const [password, setPassword] = useState(''); 
+  const [loading,  setLoading]  = useState(false); 
+ 
+  const isFormValid = email.trim() && password.trim(); 
+ 
+  const handleLogin = async () => { 
+    if (!isFormValid) { 
+      return Alert.alert('Missing credentials', 'Please fill in both fields.'); 
+    } 
+    setLoading(true); 
+    try { 
+      const res = await fetch(`${API_BASE}/login`, { 
+        method: 'POST', 
+        headers: { 'Content-Type':'application/json', Accept:'application/json' }, 
+        body: JSON.stringify({ email, password }), 
+      }); 
+      const data = await res.json(); 
+      if (!res.ok) { 
+        return Alert.alert(data.message || 'Invalid credentials'); 
+      } 
+      // Optionally store token: await SecureStore.setItemAsync('token', 
+data.token); 
+      // Navigate to the home screen 
+      router.push('/driver-home'); 
+    } catch (err) { 
+      console.error(err); 
+      Alert.alert('Network error. Please try again.'); 
+    } finally { 
+      setLoading(false); 
+    } 
+  }; 
+ 
+  return ( 
+    <ImageBackground 
+      source={require('@/assets/images/rod.png')} 
+      style={styles.background} 
+      resizeMode="cover" 
+    > 
+      <SafeAreaView style={styles.overlay}> 
+        <Text style={styles.title}>Rodud</Text> 
+ 
+        <TextInput 
+          style={styles.input} 
+          placeholder="Enter your email" 
+          placeholderTextColor="#ccc" 
+          keyboardType="email-address" 
+          autoCapitalize="none" 
+          value={email} 
+          onChangeText={setEmail} 
+        /> 
+ 
+        <TextInput 
+          style={styles.input} 
+          placeholder="Enter your password" 
+          placeholderTextColor="#ccc" 
+          secureTextEntry 
+          value={password} 
+          onChangeText={setPassword} 
+        /> 
+ 
+        <TouchableOpacity 
+          style={[styles.button, (!isFormValid || loading) && styles.buttonDisabled]} 
+          onPress={handleLogin} 
+          disabled={!isFormValid || loading} 
+        > 
+          <Text style={styles.buttonText}> 
+            {loading ? 'Logging in…' : 'Login'} 
+          </Text> 
+        </TouchableOpacity> 
+      </SafeAreaView> 
+    </ImageBackground> 
+  ); 
+} 
+ 
+const styles = StyleSheet.create({ 
+  background: { flex:1, width:WIDTH, height:HEIGHT }, 
+  overlay:    { flex:1, justifyContent:'center', paddingHorizontal:24, 
+backgroundColor:'rgba(0,0,0,0.3)' }, 
+  title:      { fontSize:32, fontWeight:'700', color:'#FFF', textAlign:'center', 
+marginBottom:32 }, 
+  input: { 
+    width:'100%', height:50, backgroundColor:'rgba(255,255,255,0.2)', 
+    borderRadius:25, paddingHorizontal:20, marginBottom:16, 
+    color:'#FFF', fontSize:16, 
+}, 
+button: { 
+width:'100%', height:50, backgroundColor:'#FCFF42', 
+borderRadius:25, justifyContent:'center', alignItems:'center', marginTop:8, 
+}, 
+buttonDisabled: { backgroundColor:'#AAA' }, 
+buttonText:     { fontSize:18, fontWeight:'600', color:'#000' }, 
+});
